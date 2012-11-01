@@ -40,7 +40,6 @@ use Moose;
 
 use YAML qw(DumpFile LoadFile);
 use String::CamelCase qw(decamelize);
-use Template::Tiny;
 use Module::Find;
 
 func dir_metadata($dir)
@@ -111,6 +110,6 @@ func run_process($config, $in_dir, $config_name)
 
   my $in_dir_creator = dir_creator($in_dir);
 
-  my $process = $proc_details->{package_name}->new();
-  $process->process($proc_config, $in_dir, $out_dir);
+  my $process = $proc_details->{package_name}->new(proc_config => $proc_config);
+  $process->process($in_dir, $out_dir);
 }

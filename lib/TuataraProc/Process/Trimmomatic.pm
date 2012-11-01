@@ -38,9 +38,10 @@ under the same terms as Perl itself.
 use perl5i::2;
 use Moose;
 
-method process()
+with 'TuataraProc::Role::Process';
+
+method make_files_arg_from_pair($in_dir, $out_dir, $pair)
 {
-
+  return (join " ", map { "$in_dir/$_" } @$pair) . " " .
+   (join " ", map { "$out_dir/$_ $out_dir/unpaired.$_" } @$pair);
 }
-
-1;

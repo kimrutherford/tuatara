@@ -1,3 +1,4 @@
 trimmomatic_low_qual_window:
   process_type: trimmomatic
-  command_line: "trimmomatic [% files %] SLIDINGWINDOW:3:28"
+  command_line_template: "trimmomatic [% files %] SLIDINGWINDOW:3:28"
+  exec_type: paired
