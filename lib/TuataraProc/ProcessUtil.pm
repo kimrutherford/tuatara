@@ -40,6 +40,8 @@ use Moose;
 
 use YAML qw(DumpFile LoadFile);
 use String::CamelCase qw(decamelize);
+use Template::Tiny;
+use Module::Find;
 
 func dir_metadata($dir)
 {
@@ -70,4 +72,45 @@ func next_out_dir($in_dir, $proc_name)
   } else {
     die "$in_dir doesn't start with a number, eg. 12-proc_name\n";
   }
+}
+
+func available_processes()
+{
+  my @proc_mods = useall $parent_package;
+
+  return map {
+    my $mod_name = $_;
+    my $proc_name = process_name($mod_name);
+    ($proc_name, { package_name =>$_ });
+  } @proc_mods;
+}
+
+func run_process($config, $in_dir, $config_name)
+{
+  my $proc_config = $config->{$config_name};
+
+  if (!defined $proc_config) {
+    croak "no configuration for: $config_name";
+  }
+
+  my $proc_type = $proc_config->{process_type};
+  my %available_processes = available_processes();
+  my $proc_details = $available_processes{$proc_type};
+
+  if (!defined $proc_details) {
+    croak "no process of type: $proc_type - exiting\n";
+  }
+
+  my $out_dir = next_out_dir($in_dir, $config_name);
+
+  if (-e $out_dir) {
+    croak "$out_dir already exists - exiting\n";
+  } else {
+    mkdir $out_dir || die "couldn't create $out_dir: $!\n";
+  }
+
+  my $in_dir_creator = dir_creator($in_dir);
+
+  my $process = $proc_details->{package_name}->new();
+  $process->process($proc_config, $in_dir, $out_dir);
 }

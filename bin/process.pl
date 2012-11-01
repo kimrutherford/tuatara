@@ -5,11 +5,10 @@ use Moose;
 
 use File::Basename;
 use Getopt::Long;
-use Module::Find;
+use YAML qw(DumpFile LoadFile);
 
 BEGIN {
   (my $base_dir = $0) =~ s|(.*)/bin/.*|$1|;
-
   unshift @INC, "$base_dir/lib";
 }
 
@@ -43,36 +42,10 @@ if (!$result || $do_help) {
   usage();
 }
 
+my $config_file = shift;
+my $config = LoadFile $config_file;
 my $in_dir = shift;
-my $proc_name = shift;
+my $config_name = shift;
 
-my @proc_mods = useall TuataraProc::Process;;
+TuataraProc::ProcessUtil::run_process($config, $in_dir, $config_name);
 
-my %proc_mods = map {
-  my $mod_name = $_;
-  my $proc_name = TuataraProc::ProcessUtil::process_name($mod_name);
-  ($proc_name, { package_name =>$_ });
-} @proc_mods;
-
-my $proc_details = $proc_mods{$proc_name};
-
-if (!defined $proc_details) {
-  die "no process for: $proc_name - exiting\n";
-}
-
-use Data::Dumper;
-$Data::Dumper::Maxdepth = 5;
-warn Dumper([\%proc_mods]), "\n";
-
-my $out_dir = TuataraProc::ProcessUtil::next_out_dir($in_dir, $proc_name);
-
-if (-e $out_dir) {
-  die "$out_dir already exists - exiting\n";
-} else {
-  mkdir $out_dir || die "couldn't create $out_dir: $!\n";
-}
-
-my $in_dir_creator = TuataraProc::ProcessUtil::dir_creator($in_dir);
-
-
-$proc_details->{package_name}->new()->process($in_dir, $out_dir);

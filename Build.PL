@@ -17,6 +17,7 @@ my $builder = Module::Build->new(
       'Getopt::Long'          => 0,
       'Module::Find'          => 0,
       'String::CamelCase'     => 0,
+      'Template::Tiny'        => 0,
     },
     build_requires => {
         'Test::More' => 0,

@@ -1,0 +1,3 @@
+trimmomatic_low_qual_window:
+  process_type: trimmomatic
+  command_line: "trimmomatic [% files %] SLIDINGWINDOW:3:28"
