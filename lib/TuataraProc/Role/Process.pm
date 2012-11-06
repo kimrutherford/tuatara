@@ -66,10 +66,26 @@ func _paired_files($in_dir)
 
 }
 
-method make_files_arg_from_pair($in_dir, $out_dir, $pair)
+func _add_in_dir($in_dir, $files)
+{
+  return map { "$in_dir/$_" } @$files;
+}
+
+method make_args_from_pair($in_dir, $out_dir, $pair)
 {
   # default
-  return join " ", @$pair;
+  return join " ", _add_in_dir($in_dir, $pair);
+}
+
+method make_args($in_dir, $out_dir, $file_arg) {
+  my @file_args = ();
+  if (ref $file_arg) {
+    @file_args = @$file_arg;
+  } else {
+    push @file_args, $file_arg;
+  }
+
+  return join " ", _add_in_dir($in_dir, \@file_args);
 }
 
 method run_command_line($in_dir, $out_dir)
@@ -83,6 +99,7 @@ method run_command_line($in_dir, $out_dir)
   my $command_line_template = $proc_config->{command_line_template};
 
   my @paired_files = _paired_files($in_dir);
+  my @all_files = map { @$_ } @paired_files;
 
   my %vars = (
     in_dir => $in_dir,
@@ -91,18 +108,22 @@ method run_command_line($in_dir, $out_dir)
 
   my $command_line = '';
 
-  if ($proc_config->{exec_type} eq 'paired') {
-    for my $pair (@paired_files) {
-      $vars{files} = $self->make_files_arg_from_pair($in_dir, $out_dir, $pair);
-
-      $template->process(\$command_line_template, \%vars, \$command_line);
-
-  warn "running: $command_line\n";
-#  system $command_line;
-
+  given ($proc_config->{exec_type}) {
+    when ('paired') {
+      for my $pair (@paired_files) {
+        $vars{args} = $self->make_args_from_pair($in_dir, $out_dir, $pair);
+      }
+    }
+    when ('all_files') {
+      $vars{args} = $self->make_args($in_dir, $out_dir, [@all_files]);
+    }
+    default {
+      die "unknown exec_type: ", $proc_config->{exec_type};
     }
   }
 
+  $template->process(\$command_line_template, \%vars, \$command_line);
+  system $command_line;
 }
 
 

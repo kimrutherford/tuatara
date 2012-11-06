@@ -1,4 +1,8 @@
 trimmomatic_low_qual_window:
   process_type: trimmomatic
-  command_line_template: "trimmomatic [% files %] SLIDINGWINDOW:3:28"
+  command_line_template: "trimmomatic-pe [% args %] SLIDINGWINDOW:3:20"
   exec_type: paired
+fastqc:
+  process_type: fast_qc
+  command_line_template: "fastqc [% args %] --outdir [% out_dir %]"
+  exec_type: all_files

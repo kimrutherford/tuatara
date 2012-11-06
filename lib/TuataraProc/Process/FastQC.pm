@@ -1,8 +1,8 @@
-package TuataraProc::Process::Trimmomatic;
+package TuataraProc::Process::FastQC;
 
 =head1 NAME
 
-TuataraProc::Process::Trimmomatic - Trim using Trimmomatic
+TuataraProc::Process::FastQC - A process to run FastQC
 
 =head1 SYNOPSIS
 
@@ -18,7 +18,7 @@ Please report any bugs or feature requests to C<kmr44@cam.ac.uk>.
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc TuataraProc::Process::Trimmomatic
+    perldoc TuataraProc::Process::FastQC
 
 =over 4
 
@@ -39,9 +39,3 @@ use perl5i::2;
 use Moose;
 
 with 'TuataraProc::Role::Process';
-
-method make_args_from_pair($in_dir, $out_dir, $pair)
-{
-  return (join " ", map { "$in_dir/$_" } @$pair) . " " .
-   (join " ", map { "$out_dir/$_ $out_dir/unpaired.$_" } @$pair);
-}
