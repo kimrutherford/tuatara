@@ -77,7 +77,8 @@ method make_args_from_pair($in_dir, $out_dir, $pair)
   return join " ", _add_in_dir($in_dir, $pair);
 }
 
-method make_args($in_dir, $out_dir, $file_arg) {
+method make_args($in_dir, $out_dir, $file_arg)
+{
   my @file_args = ();
   if (ref $file_arg) {
     @file_args = @$file_arg;
@@ -86,6 +87,11 @@ method make_args($in_dir, $out_dir, $file_arg) {
   }
 
   return join " ", _add_in_dir($in_dir, \@file_args);
+}
+
+method post_process($in_dir, $out_dir)
+{
+  # default - no nothing
 }
 
 method run_command_line($in_dir, $out_dir)
@@ -109,6 +115,9 @@ method run_command_line($in_dir, $out_dir)
   my $command_line = '';
 
   given ($proc_config->{exec_type}) {
+    when ('all_pairs') {
+      $vars{args} = $self->make_args_from_pairs($in_dir, $out_dir, [@paired_files]);
+    }
     when ('paired') {
       for my $pair (@paired_files) {
         $vars{args} = $self->make_args_from_pair($in_dir, $out_dir, $pair);
