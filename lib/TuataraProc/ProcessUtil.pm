@@ -42,9 +42,23 @@ use YAML qw(DumpFile LoadFile);
 use String::CamelCase qw(decamelize);
 use Module::Find;
 
+func metadata_filename($dir)
+{
+  return "$dir/metadata.yaml";
+}
+
 func dir_metadata($dir)
 {
-  return LoadFile "$dir/metadata.yaml";
+  return LoadFile(metadata_filename($dir));
+}
+
+func write_dir_metadata($dir, $data)
+{
+  my $metadata_filename = metadata_filename($dir);
+  if (-e $metadata_filename) {
+    die "$metadata_filename already exists";
+  }
+  DumpFile($metadata_filename, $data);
 }
 
 func dir_creator($in_dir)
@@ -110,6 +124,7 @@ func run_process($config, $in_dir, $config_name)
 
   my $in_dir_creator = dir_creator($in_dir);
 
-  my $process = $proc_details->{package_name}->new(proc_config => $proc_config);
+  my $process = $proc_details->{package_name}->new(process_name => $config_name,
+                                                   proc_config => $proc_config);
   $process->process($in_dir, $out_dir);
 }

@@ -40,6 +40,11 @@ use Moose::Role;
 
 use Template::Tiny;
 
+has process_name => (
+  is => 'ro',
+  required => 1,
+);
+
 has proc_config => (
   is => 'ro',
   required => 1,
@@ -101,6 +106,13 @@ method run_command_line($in_dir, $out_dir)
   );
 
   my $proc_config = $self->proc_config();
+
+  my %new_metadata = (
+    creator => $self->process_name(),
+    config => $proc_config,
+  );
+
+  TuataraProc::ProcessUtil::write_dir_metadata($out_dir, \%new_metadata);
 
   my $command_line_template = $proc_config->{command_line_template};
 
