@@ -16,12 +16,14 @@ use TuataraProc::ProcessUtil;
 
 my $dry_run = 0;
 my $do_help = 0;
+my $in_dir = undef;
 
 if (@ARGV < 2) {
   usage();
 }
 
-my $result = GetOptions ("dry-run|T" => \$dry_run,
+my $result = GetOptions ("input_directory|i" => \$in_dir,
+                         "dry-run|T" => \$dry_run,
                          "help|h" => \$do_help);
 
 sub usage
@@ -35,6 +37,7 @@ sub usage
   }
 
   die qq|${message}usage:
+$0 [-i input_directory] <process_name> [<process_name> ...]
 |;
 }
 
@@ -44,8 +47,15 @@ if (!$result || $do_help) {
 
 my $config_file = shift;
 my $config = LoadFile $config_file;
-my $in_dir = shift;
-my $config_name = shift;
 
-TuataraProc::ProcessUtil::run_process($config, $in_dir, $config_name);
+if (!@ARGV) {
+  usage "no processes given";
+}
+
+for my $config_name (@ARGV) {
+  TuataraProc::ProcessUtil::run_process($config, $config_name, $in_dir);
+
+  # use the input directory for the first process only
+  $in_dir = undef;
+}
 

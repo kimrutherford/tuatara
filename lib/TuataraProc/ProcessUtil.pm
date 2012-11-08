@@ -98,8 +98,46 @@ func available_processes()
   } @proc_mods;
 }
 
-func run_process($config, $in_dir, $config_name)
+# find the input directory when the user hasn't supplied one
+func find_in_dirs()
 {
+  opendir my $dh, "." or die "can't open current directory: $!\n";
+
+  my %ents = ();
+
+  while (defined (my $ent = readdir $dh)) {
+    next if grep { $_ eq $ent } qw(. ..);
+
+    if ($ent =~ /^(\d\d)-(.*)/) {
+      my $index = $1;
+      my $name = $2;
+
+      push @{$ents{$index}}, {
+        index => $index,
+        name => $name,
+        file_name => $ent,
+      };
+    }
+  }
+
+  my @ent_indexes = sort keys %ents;
+
+  my $last_index = $ent_indexes[-1];
+
+  return map { $_->{file_name}; } @{$ents{$last_index}};
+}
+
+func run_process($config, $config_name, $in_dir)
+{
+  if (!defined $in_dir) {
+    my @in_dirs = find_in_dirs();
+    warn "no input directory given, using @in_dirs\n";
+
+    map { run_process($config, $config_name, $_); } @in_dirs;
+
+    return;
+  }
+
   my $proc_config = $config->{$config_name};
 
   if (!defined $proc_config) {
