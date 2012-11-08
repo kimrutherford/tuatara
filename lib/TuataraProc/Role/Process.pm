@@ -126,25 +126,30 @@ method run_command_line($in_dir, $out_dir)
 
   my $command_line = '';
 
+  my $proc = sub {
+    $template->process(\$command_line_template, \%vars, \$command_line);
+    system $command_line;
+  };
+
   given ($proc_config->{exec_type}) {
     when ('all_pairs') {
       $vars{args} = $self->make_args_from_pairs($in_dir, $out_dir, [@paired_files]);
+      $proc->();
     }
     when ('paired') {
       for my $pair (@paired_files) {
         $vars{args} = $self->make_args_from_pair($in_dir, $out_dir, $pair);
+        $proc->();
       }
     }
     when ('all_files') {
       $vars{args} = $self->make_args($in_dir, $out_dir, [@all_files]);
+      $proc->();
     }
     default {
       die "unknown exec_type: ", $proc_config->{exec_type};
     }
   }
-
-  $template->process(\$command_line_template, \%vars, \$command_line);
-  system $command_line;
 }
 
 
