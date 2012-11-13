@@ -1,12 +1,15 @@
-trimmomatic_low_qual_window:
-  process_type: trimmomatic
-  command_line_template: "trimmomatic-pe -phred33 [% args %] SLIDINGWINDOW:3:30"
-  exec_type: paired
-fastqc:
-  process_type: fast_qc
-  command_line_template: "fastqc [% args %] --outdir [% out_dir %]"
-  exec_type: all_files
-quake:
-  process_type: quake
-  command_line_template: "quake.py [% args %] -k 10 -p 10"
-  exec_type: all_pairs
+name: tuatara
+
+processes:
+  trimmomatic_low_qual_window:
+    process_type: trimmomatic
+    command_line_template: "trimmomatic-pe -phred33 [% args %] SLIDINGWINDOW:3:30 MINLEN:30"
+    exec_type: paired
+  fastqc:
+    process_type: fast_qc
+    command_line_template: "fastqc [% args %] --outdir [% out_dir %]"
+    exec_type: all_files
+  quake:
+    process_type: quake
+    command_line_template: "quake.py [% args %] -k 10 -p 10"
+    exec_type: all_pairs

@@ -1,0 +1,9 @@
+creator: nzgl
+libraries:
+  pe120:
+    -
+      - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L001_R1_001.fastq
+      - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L001_R2_001.fastq
+    -
+      - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L002_R1_001.fastq
+      - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L002_R2_001.fastq

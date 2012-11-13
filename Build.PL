@@ -18,9 +18,12 @@ my $builder = Module::Build->new(
       'Module::Find'          => 0,
       'String::CamelCase'     => 0,
       'Template::Tiny'        => 0,
+      'File::Temp'            => 0,
+      'File::Copy'            => 0,
     },
     build_requires => {
         'Test::More' => 0,
+        'Test::File' => 0,
     },
     add_to_cleanup      => [ 'TuataraProc-*' ],
     create_makefile_pl => 'traditional',

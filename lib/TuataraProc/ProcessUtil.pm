@@ -124,6 +124,8 @@ func find_in_dirs()
 
   my $last_index = $ent_indexes[-1];
 
+  closedir $dh;
+
   return map { $_->{file_name}; } @{$ents{$last_index}};
 }
 
@@ -138,7 +140,7 @@ func run_process($config, $config_name, $in_dir)
     return;
   }
 
-  my $proc_config = $config->{$config_name};
+  my $proc_config = $config->{processes}->{$config_name};
 
   if (!defined $proc_config) {
     croak "no configuration for: $config_name";

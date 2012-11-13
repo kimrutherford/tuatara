@@ -57,11 +57,12 @@ func _paired_files($in_dir)
   my %collector = ();
 
   while (defined (my $ent = readdir(D))) {
-    next if grep { $_ eq $ent } qw(. .. metadata.yaml);
+    next if grep { $_ eq $ent } qw(. ..);
+    next if $ent =~ /metadata.yaml/;
+    next if $ent =~ /^unpaired\./;  # from Trimmomatic
     if ($ent =~ /(.*_R)[12](_.*)/) {
       push @{$collector{"$1x$2"}}, $ent;
     } else {
-      croak "unpaired file: $ent";
     }
   }
 
