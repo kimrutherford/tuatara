@@ -129,6 +129,52 @@ func find_in_dirs()
   return map { $_->{file_name}; } @{$ents{$last_index}};
 }
 
+func _fastq_from_metadata($metadata)
+{
+  my $libraries = $metadata->{libraries};
+
+  my @fastq = map {
+    map {
+      if (ref $_) {
+        @$_;
+      } else {
+        $_;
+      }
+    } @{$libraries->{$_}};
+  } keys %$libraries;
+
+  return map { $_ => 1; } @fastq;
+}
+
+func _check_metadata_fq($in_dir)
+{
+  my $metadata = dir_metadata($in_dir);
+
+  my %fastq_from_metadata = _fastq_from_metadata($metadata);
+
+  opendir my $dh, $in_dir || die "Can't open directory $in_dir: $!\n";
+
+  my %fastq_in_dir = ();
+
+  while (defined (my $ent = readdir $dh)) {
+    if ($ent =~ /(\.fq|\.fastq)$/) {
+      if (!exists $fastq_from_metadata{$ent}) {
+        die "$ent isn't mentioned in the metadata in $in_dir";
+      }
+
+      $fastq_in_dir{$ent} = 1;
+    }
+  }
+
+  map {
+    if (!$fastq_in_dir{$_}) {
+      die "$_ is mentioned in the metadata, bit isn't in $in_dir";
+    }
+  } keys %fastq_from_metadata;
+
+  closedir($dh);
+}
+
 func run_process($config, $config_name, $in_dir)
 {
   if (!defined $in_dir) {
@@ -138,6 +184,12 @@ func run_process($config, $config_name, $in_dir)
     map { run_process($config, $config_name, $_); } @in_dirs;
 
     return;
+  }
+
+  my $metadata = dir_metadata($in_dir);
+
+  if ($metadata->{creator} eq 'sequencing_centre') {
+    _check_metadata_fq($in_dir);
   }
 
   my $proc_config = $config->{processes}->{$config_name};
