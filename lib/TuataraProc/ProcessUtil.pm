@@ -217,6 +217,6 @@ func run_process($config, $config_name, $in_dir)
   my $in_dir_creator = dir_creator($in_dir);
 
   my $process = $proc_details->{package_name}->new(process_name => $config_name,
-                                                   proc_config => $proc_config);
+                                                   config => $config);
   $process->process($in_dir, $out_dir);
 }

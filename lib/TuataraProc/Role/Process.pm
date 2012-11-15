@@ -45,7 +45,7 @@ has process_name => (
   required => 1,
 );
 
-has proc_config => (
+has config => (
   is => 'ro',
   required => 1,
 );
@@ -106,12 +106,14 @@ method run_command_line($in_dir, $out_dir)
     TRIM => 1,
   );
 
-  my $proc_config = $self->proc_config();
+  my $process_name = $self->process_name();
+
+  my $proc_config = $self->config()->{processes}->{$process_name};
 
   my %new_metadata = (
-    creator => $self->process_name(),
+    creator => $process_name,
     source => $in_dir,
-    config => $proc_config,
+    config => $self->config(),
   );
 
   TuataraProc::ProcessUtil::write_dir_metadata($out_dir, \%new_metadata);
@@ -124,6 +126,8 @@ method run_command_line($in_dir, $out_dir)
   my %vars = (
     in_dir => $in_dir,
     out_dir => $out_dir,
+    config => $self->config(),
+    new_metadata => \%new_metadata,
   );
 
   my $command_line = '';
