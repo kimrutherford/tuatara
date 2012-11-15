@@ -110,6 +110,7 @@ method run_command_line($in_dir, $out_dir)
 
   my %new_metadata = (
     creator => $self->process_name(),
+    source => $in_dir,
     config => $proc_config,
   );
 
