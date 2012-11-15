@@ -140,7 +140,7 @@ func _fastq_from_metadata($metadata)
       } else {
         $_;
       }
-    } @{$libraries->{$_}};
+    } @{$libraries->{$_}->{files}};
   } keys %$libraries;
 
   return map { $_ => 1; } @fastq;

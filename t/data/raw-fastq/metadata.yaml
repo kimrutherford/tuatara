@@ -1,17 +1,29 @@
 creator: sequencing_centre
 libraries:
   pe120:
-    -
-      - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L001_R1_001.fastq
-      - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L001_R2_001.fastq
-    -
-      - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L002_R1_001.fastq
-      - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L002_R2_001.fastq
+    type: paired_end
+    insert_size: 120
+    files:
+      -
+        - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L001_R1_001.fastq
+        - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L001_R2_001.fastq
+      -
+        - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L002_R1_001.fastq
+        - ACOTKVACXX_NZGL00054_Tuatara_1_GCCAAT_L002_R2_001.fastq
   mp5000:
-    -
-      - BCOGKKACXX_NZGL00054_MPE_5kb_NoIndex_L008_R1_001.fastq
-      - BCOGKKACXX_NZGL00054_MPE_5kb_NoIndex_L008_R2_001.fastq
+    type: mate_pair
+    insert_size: 5000
+    files:
+      -
+        - BCOGKKACXX_NZGL00054_MPE_5kb_NoIndex_L008_R1_001.fastq
+        - BCOGKKACXX_NZGL00054_MPE_5kb_NoIndex_L008_R2_001.fastq
   mp2500:
-    -
-      - BDOVECACXX_NZGL00054_TUATARA_NoIndex_L008_R1_001.fastq
-      - BDOVECACXX_NZGL00054_TUATARA_NoIndex_L008_R2_001.fastq
+    type: mate_pair
+    insert_size: 2500
+    files:
+      -
+        - BDOVECACXX_NZGL00054_TUATARA_NoIndex_L008_R1_001.fastq
+        - BDOVECACXX_NZGL00054_TUATARA_NoIndex_L008_R2_001.fastq
+  se_misc:
+    type: single_end
+    files: []
