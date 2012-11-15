@@ -9,7 +9,7 @@ processes:
     process_type: fast_qc
     command_line_template: "fastqc [% args %] --outdir [% out_dir %]"
     exec_type: all_files
-  quake:
+  quake_k12:
     process_type: quake
-    command_line_template: "quake.py [% args %] -k 10 -p 10"
+    command_line_template: "quake.py [% args %] -k 12 -p 10"
     exec_type: all_pairs
