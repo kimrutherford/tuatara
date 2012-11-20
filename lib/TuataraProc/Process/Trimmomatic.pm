@@ -38,7 +38,41 @@ under the same terms as Perl itself.
 use perl5i::2;
 use Moose;
 
+use Clone qw(clone);
+
 with 'TuataraProc::Role::Process';
+
+method output_files($out_dir)
+{
+  my $in_dir_files = clone $self->in_dir_metadata()->{files};
+
+  my ($all_files, $paired_files) =
+    $self->all_files_map($in_dir_files,
+                         sub {
+                           # do nothing, just return filenames
+                           $_;
+                         });
+
+  my @file_names =
+    map {
+      my $unpaired_file_name = "unpaired.$_";
+      my $full_path = "$out_dir/$unpaired_file_name";
+      if (-z $full_path) {
+        unlink $full_path;
+        ();
+      } else {
+        $unpaired_file_name;
+      }
+    } @$all_files;
+
+  $in_dir_files->{trimmomatic_se} =
+    {
+      type => 'single_end',
+      paths => \@file_names,
+    };
+
+  return $in_dir_files;
+}
 
 method make_args_from_pair($in_dir, $out_dir, $pair)
 {

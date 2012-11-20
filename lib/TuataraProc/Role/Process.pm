@@ -50,27 +50,10 @@ has config => (
   required => 1,
 );
 
-func _paired_files($in_dir)
-{
-  opendir(D, $in_dir) || die "Can't open directory $in_dir: $!\n";
-
-  my %collector = ();
-
-  while (defined (my $ent = readdir(D))) {
-    next if grep { $_ eq $ent } qw(. ..);
-    next if $ent =~ /metadata.yaml/;
-    next if $ent =~ /^unpaired\./;  # from Trimmomatic
-    if ($ent =~ /(.*_R)[12](_.*)/) {
-      push @{$collector{"$1x$2"}}, $ent;
-    } else {
-    }
-  }
-
-  closedir(D);
-
-  return map { [ sort @{$collector{$_}} ] } sort keys %collector;
-
-}
+has in_dir_metadata => (
+  is => 'ro',
+  required => 1,
+);
 
 func _add_in_dir($in_dir, $files)
 {
@@ -100,7 +83,42 @@ method post_process($in_dir, $out_dir)
   # default - no nothing
 }
 
-method run_command_line($in_dir, $out_dir)
+method all_files_map($files, $proc)
+{
+  my @paired_files = ();
+
+  my @all_files =
+    map {
+      my $library_name = $_;
+      map {
+        my $files_ref = $_;
+        if (ref $files_ref) {
+          push @paired_files, $files_ref;
+          map {
+            if (defined $proc) {
+              $_ = $proc->($_);
+            }
+            $_;
+          } @$files_ref;
+        } else {
+          if (defined $proc) {
+            $_ = $proc->($_);
+          }
+          $_;
+        }
+      } @{$files->{$library_name}->{paths}};
+    } keys %$files;
+
+  return (\@all_files, \@paired_files);
+}
+
+# return the hash of files that were created by the process
+method output_files($out_dir)
+{
+  return $self->in_dir_metadata()->{files};
+}
+
+method process($in_dir, $out_dir)
 {
   my $template = Template::Tiny->new(
     TRIM => 1,
@@ -116,12 +134,10 @@ method run_command_line($in_dir, $out_dir)
     config => $self->config(),
   );
 
-  TuataraProc::ProcessUtil::write_dir_metadata($out_dir, \%new_metadata);
-
   my $command_line_template = $proc_config->{command_line_template};
 
-  my @paired_files = _paired_files($in_dir);
-  my @all_files = map { @$_ } @paired_files;
+  my ($all_files, $paired_files) =
+    $self->all_files_map($self->in_dir_metadata->{files});
 
   my %vars = (
     in_dir => $in_dir,
@@ -139,27 +155,28 @@ method run_command_line($in_dir, $out_dir)
 
   given ($proc_config->{exec_type}) {
     when ('all_pairs') {
-      $vars{args} = $self->make_args_from_pairs($in_dir, $out_dir, [@paired_files]);
+      $vars{args} = $self->make_args_from_pairs($in_dir, $out_dir, $paired_files);
       $proc->();
     }
     when ('paired') {
-      for my $pair (@paired_files) {
+      for my $pair (@$paired_files) {
         $vars{args} = $self->make_args_from_pair($in_dir, $out_dir, $pair);
         $proc->();
       }
     }
     when ('all_files') {
-      $vars{args} = $self->make_args($in_dir, $out_dir, [@all_files]);
+      $vars{args} = $self->make_args($in_dir, $out_dir, $all_files);
       $proc->();
     }
     default {
       die "unknown exec_type: ", $proc_config->{exec_type};
     }
   }
-}
 
+  my $new_files = $self->output_files($out_dir);
 
-method process($in_dir, $out_dir)
-{
-  $self->run_command_line($in_dir, $out_dir);
+  $new_metadata{files} = $new_files;
+
+  # write metadata only once the process succeeds
+  TuataraProc::ProcessUtil::write_dir_metadata($out_dir, \%new_metadata);
 }

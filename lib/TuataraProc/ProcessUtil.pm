@@ -131,7 +131,7 @@ func find_in_dirs()
 
 func _fastq_from_metadata($metadata)
 {
-  my $libraries = $metadata->{libraries};
+  my $files = $metadata->{files};
 
   my @fastq = map {
     map {
@@ -140,13 +140,13 @@ func _fastq_from_metadata($metadata)
       } else {
         $_;
       }
-    } @{$libraries->{$_}->{files}};
-  } keys %$libraries;
+    } @{$files->{$_}->{paths}};
+  } keys %$files;
 
   return map { $_ => 1; } @fastq;
 }
 
-func _check_metadata_fq($in_dir)
+func _check_metadata_files($in_dir)
 {
   my $metadata = dir_metadata($in_dir);
 
@@ -186,11 +186,7 @@ func run_process($config, $config_name, $in_dir)
     return;
   }
 
-  my $metadata = dir_metadata($in_dir);
-
-  if ($metadata->{creator} eq 'sequencing_centre') {
-    _check_metadata_fq($in_dir);
-  }
+  my $new_metadata = dir_metadata($in_dir);
 
   my $proc_config = $config->{processes}->{$config_name};
 
@@ -217,6 +213,7 @@ func run_process($config, $config_name, $in_dir)
   my $in_dir_creator = dir_creator($in_dir);
 
   my $process = $proc_details->{package_name}->new(process_name => $config_name,
-                                                   config => $config);
+                                                   config => $config,
+                                                   in_dir_metadata => $new_metadata);
   $process->process($in_dir, $out_dir);
 }

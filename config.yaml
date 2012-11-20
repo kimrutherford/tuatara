@@ -1,4 +1,4 @@
-name: tuatara
+project_name: tuatara
 
 processes:
   trimmomatic_low_qual_window:
