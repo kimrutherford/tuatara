@@ -37,6 +37,7 @@ under the same terms as Perl itself.
 
 use perl5i::2;
 use Moose::Role;
+use File::Copy;
 
 use Template::Tiny;
 
@@ -83,33 +84,41 @@ method post_process($in_dir, $out_dir)
   # default - no nothing
 }
 
-method all_files_map($files, $proc)
+method all_files_map($files, $proc, $paired_filter_proc)
 {
   my @paired_files = ();
+  my @ignored_paired_files = ();
 
   my @all_files =
     map {
       my $library_name = $_;
+      my $file_config = $files->{$library_name};
       map {
         my $files_ref = $_;
         if (ref $files_ref) {
-          push @paired_files, $files_ref;
-          map {
+          my @mapped_files = map {
             if (defined $proc) {
-              $_ = $proc->($_);
+              $proc->($_);
+            } else {
+              $_;
             }
-            $_;
           } @$files_ref;
+          if (!defined $paired_filter_proc || $paired_filter_proc->($_, $file_config)) {
+            push @paired_files, [@mapped_files];
+          } else {
+            push @ignored_paired_files, [@mapped_files];
+          }
+          @mapped_files;
         } else {
           if (defined $proc) {
             $_ = $proc->($_);
           }
           $_;
         }
-      } @{$files->{$library_name}->{paths}};
+      } @{$file_config->{paths}};
     } keys %$files;
 
-  return (\@all_files, \@paired_files);
+  return (\@all_files, \@paired_files, \@ignored_paired_files);
 }
 
 # return the hash of files that were created by the process
@@ -136,8 +145,20 @@ method process($in_dir, $out_dir)
 
   my $command_line_template = $proc_config->{command_line_template};
 
-  my ($all_files, $paired_files) =
-    $self->all_files_map($self->in_dir_metadata->{files});
+  my ($all_files, $keep_paired_files, $ignored_paired_files) =
+    $self->all_files_map($self->in_dir_metadata->{files},
+                         undef,
+                         sub {
+                           my $val = shift;
+                           my $file_config = shift;
+
+                           if ($file_config->{type} eq 'paired_end') {
+                             # keep;
+                             1;
+                           } else {
+                             0;
+                           }
+                         });
 
   my %vars = (
     in_dir => $in_dir,
@@ -155,11 +176,11 @@ method process($in_dir, $out_dir)
 
   given ($proc_config->{exec_type}) {
     when ('all_pairs') {
-      $vars{args} = $self->make_args_from_pairs($in_dir, $out_dir, $paired_files);
+      $vars{args} = $self->make_args_from_pairs($in_dir, $out_dir, $keep_paired_files);
       $proc->();
     }
     when ('paired') {
-      for my $pair (@$paired_files) {
+      for my $pair (@$keep_paired_files) {
         $vars{args} = $self->make_args_from_pair($in_dir, $out_dir, $pair);
         $proc->();
       }
@@ -176,6 +197,13 @@ method process($in_dir, $out_dir)
   my $new_files = $self->output_files($out_dir);
 
   $new_metadata{files} = $new_files;
+
+  for my $pair (@$ignored_paired_files) {
+    for my $pair_file (@$pair) {
+      copy("$in_dir/$pair_file", "$out_dir/$pair_file")
+        or die "can't copy $pair_file: $!";
+    }
+  }
 
   # write metadata only once the process succeeds
   TuataraProc::ProcessUtil::write_dir_metadata($out_dir, \%new_metadata);

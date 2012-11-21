@@ -44,13 +44,16 @@ with 'TuataraProc::Role::Process';
 
 method output_files($out_dir)
 {
-  my $in_dir_files = clone $self->in_dir_metadata()->{files};
+  my $cloned_files = clone $self->in_dir_metadata()->{files};
 
   my ($all_files, $paired_files) =
-    $self->all_files_map($in_dir_files,
+    $self->all_files_map($cloned_files,
+                         undef,
                          sub {
-                           # do nothing, just return filenames
-                           $_;
+                           my $file_name = shift;
+                           my $file_config = shift;
+
+                           return $file_config->{type} eq 'paired_end';
                          });
 
   my @file_names =
@@ -63,15 +66,15 @@ method output_files($out_dir)
       } else {
         $unpaired_file_name;
       }
-    } @$all_files;
+    } map { @$_ } @$paired_files;
 
-  $in_dir_files->{trimmomatic_se} =
+  $cloned_files->{trimmomatic_se} =
     {
       type => 'single_end',
       paths => \@file_names,
     };
 
-  return $in_dir_files;
+  return $cloned_files;
 }
 
 method make_args_from_pair($in_dir, $out_dir, $pair)
