@@ -84,10 +84,12 @@ method post_process($in_dir, $out_dir)
   # default - no nothing
 }
 
-method all_files_map($files, $proc, $paired_filter_proc)
+method all_files_map($files, $proc, $split_proc)
 {
   my @paired_files = ();
   my @ignored_paired_files = ();
+
+  my @split_results = ();
 
   my @all_files =
     map {
@@ -95,30 +97,35 @@ method all_files_map($files, $proc, $paired_filter_proc)
       my $file_config = $files->{$library_name};
       map {
         my $files_ref = $_;
+        my @res = ();
         if (ref $files_ref) {
-          my @mapped_files = map {
+          map {
             if (defined $proc) {
               $proc->($_);
-            } else {
-              $_;
             }
+            push @res, $_;
           } @$files_ref;
-          if (!defined $paired_filter_proc || $paired_filter_proc->($_, $file_config)) {
-            push @paired_files, [@mapped_files];
-          } else {
-            push @ignored_paired_files, [@mapped_files];
-          }
-          @mapped_files;
         } else {
           if (defined $proc) {
             $_ = $proc->($_);
           }
-          $_;
+          push @res, $_;
         }
+
+        if (defined $split_proc) {
+          my @bits = $split_proc->($_, $file_config);
+          for (my $i = 0; $i < @bits; $i++) {
+            if (defined $bits[$i]) {
+              push @{$split_results[$i]}, $bits[$i];
+            }
+          }
+        }
+
+        @res;
       } @{$file_config->{paths}};
     } keys %$files;
 
-  return (\@all_files, \@paired_files, \@ignored_paired_files);
+  return (\@all_files, @split_results);
 }
 
 # return the hash of files that were created by the process
@@ -145,18 +152,26 @@ method process($in_dir, $out_dir)
 
   my $command_line_template = $proc_config->{command_line_template};
 
-  my ($all_files, $keep_paired_files, $ignored_paired_files) =
-    $self->all_files_map($self->in_dir_metadata->{files},
+  my ($all_files, $paired_end_files, $single_end_files, $mate_pair_files) =
+    $self->all_files_map($self->in_dir_metadata()->{files},
                          undef,
                          sub {
                            my $val = shift;
                            my $file_config = shift;
 
-                           if ($file_config->{type} eq 'paired_end') {
-                             # keep;
-                             1;
-                           } else {
-                             0;
+                           given ($file_config->{type}) {
+                             when ('paired_end') {
+                               return ($val, undef, undef);
+                             }
+                             when ('single_end') {
+                               return (undef, $val, undef);
+                             }
+                             when ('mate_pair') {
+                               return (undef, undef, $val);
+                             }
+                             default {
+                               die "unknown type: ", $file_config->{type}, "\n";
+                             }
                            }
                          });
 
@@ -164,6 +179,7 @@ method process($in_dir, $out_dir)
     in_dir => $in_dir,
     out_dir => $out_dir,
     config => $self->config(),
+    in_dir_metadata => $self->in_dir_metadata(),
     new_metadata => \%new_metadata,
   );
 
@@ -176,11 +192,11 @@ method process($in_dir, $out_dir)
 
   given ($proc_config->{exec_type}) {
     when ('all_pairs') {
-      $vars{args} = $self->make_args_from_pairs($in_dir, $out_dir, $keep_paired_files);
+      $vars{args} = $self->make_args_from_pairs($in_dir, $out_dir, $paired_end_files, $single_end_files, $mate_pair_files);
       $proc->();
     }
     when ('paired') {
-      for my $pair (@$keep_paired_files) {
+      for my $pair (@$paired_end_files) {
         $vars{args} = $self->make_args_from_pair($in_dir, $out_dir, $pair);
         $proc->();
       }
@@ -198,10 +214,11 @@ method process($in_dir, $out_dir)
 
   $new_metadata{files} = $new_files;
 
-  for my $pair (@$ignored_paired_files) {
-    for my $pair_file (@$pair) {
-      copy("$in_dir/$pair_file", "$out_dir/$pair_file")
-        or die "can't copy $pair_file: $!";
+  for my $file_name (@$all_files) {
+    my $dest_file = "$out_dir/$file_name";
+    if (!-f $dest_file) {
+      copy("$in_dir/$file_name", $dest_file)
+        or die "can't copy $file_name: $!";
     }
   }
 

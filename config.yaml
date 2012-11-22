@@ -13,3 +13,7 @@ processes:
     process_type: quake
     command_line_template: "quake.py [% args %] -k 12 -p 10"
     exec_type: all_pairs
+  abyss_k60:
+    process_type: abyss
+    command_line_template: "abyss-pe [% args %] k=60 name=[% config.project_name %]"
+    exec_type: all_pairs

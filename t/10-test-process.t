@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 4;
+use Test::More tests => 5;
 use Test::File;
 
 BEGIN {
@@ -39,12 +39,12 @@ my $old_dir = getcwd();
 chdir $temp_dir;
 
 TuataraProc::ProcessUtil::run_process($config, 'trimmomatic_low_qual_window');
-
 file_exists_ok('01-trimmomatic_low_qual_window');
 file_exists_ok('01-trimmomatic_low_qual_window/BDOVECACXX_NZGL00054_TUATARA_NoIndex_L008_R2_001.fastq');
 
 TuataraProc::ProcessUtil::run_process($config, 'fastqc');
-
 file_exists_ok('02-fastqc');
 file_exists_ok('02-fastqc/BDOVECACXX_NZGL00054_TUATARA_NoIndex_L008_R2_001_fastqc/fastqc_report.html');
 
+TuataraProc::ProcessUtil::run_process($config, 'abyss_k60', '01-trimmomatic_low_qual_window');
+file_exists_ok('02-abyss_k60');

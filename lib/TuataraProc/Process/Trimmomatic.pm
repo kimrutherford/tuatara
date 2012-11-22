@@ -50,10 +50,14 @@ method output_files($out_dir)
     $self->all_files_map($cloned_files,
                          undef,
                          sub {
-                           my $file_name = shift;
+                           my $file_arg = shift;
                            my $file_config = shift;
 
-                           return $file_config->{type} eq 'paired_end';
+                           if ($file_config->{type} eq 'paired_end') {
+                             return ($file_arg);
+                           } else {
+                             return undef;
+                           }
                          });
 
   my @file_names =
