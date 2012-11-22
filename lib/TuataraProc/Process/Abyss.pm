@@ -45,7 +45,7 @@ method make_args_from_pairs($in_dir, $out_dir)
   my $in_dir_metadata = $self->in_dir_metadata();
 
   my %libs = ();
-  my %pe = ();
+  my %mp = ();
   my @se = ();
 
   my $files_conf = $in_dir_metadata->{files};
@@ -62,7 +62,7 @@ method make_args_from_pairs($in_dir, $out_dir)
           $libs{$library_name . "_$i"} = $lane;
         }
         when ('mate_pair') {
-          $pe{$library_name . "_$i"} = $lane;
+          $mp{$library_name . "_$i"} = $lane;
         }
         when ('single_end') {
           push @se, $lane;
@@ -80,17 +80,17 @@ method make_args_from_pairs($in_dir, $out_dir)
       my $libs_key = $_;
       "$libs_key='" . (join " ", map { "$in_dir/$_" } @{$libs{$libs_key}}) . "'";
     } keys %libs;
-  my $pe_string = 'pe="' . (join ' ', keys %pe) . '"';
-  my $pe_file_names_string =
+  my $mp_string = 'mp="' . (join ' ', keys %mp) . '"';
+  my $mp_file_names_string =
     join ' ', map {
-      my $pe_key = $_;
-      "$pe_key='" . (join " ", map { "$in_dir/$_" } @{$pe{$pe_key}}) . "'";
-    } keys %pe;
+      my $mp_key = $_;
+      "$mp_key='" . (join " ", map { "$in_dir/$_" } @{$mp{$mp_key}}) . "'";
+    } keys %mp;
   my $se_file_names_string =
     'se="' . (join " ", map { "$in_dir/$_" } @se) . '"';
 
-  my $args = "$libs_string $lib_file_names_string $pe_string " .
-    "$pe_file_names_string $se_file_names_string";
+  my $args = "$libs_string $lib_file_names_string $mp_string " .
+    "$mp_file_names_string $se_file_names_string";
 
   return $args;
 }
