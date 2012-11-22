@@ -134,6 +134,16 @@ method output_files($out_dir)
   return $self->in_dir_metadata()->{files};
 }
 
+method pre_process($in_dir, $out_dir)
+{
+  # default - do nothing
+}
+
+method post_process($in_dir, $out_dir)
+{
+  # default - do nothing
+}
+
 method process($in_dir, $out_dir)
 {
   my $template = Template::Tiny->new(

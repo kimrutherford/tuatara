@@ -215,5 +215,11 @@ func run_process($config, $config_name, $in_dir)
   my $process = $proc_details->{package_name}->new(process_name => $config_name,
                                                    config => $config,
                                                    in_dir_metadata => $new_metadata);
-  $process->process($in_dir, $out_dir);
+  $process->pre_process($in_dir, $out_dir);
+  try {
+    $process->process($in_dir, $out_dir);
+  } catch {
+    warn "process() died: $_\n";
+  };
+  $process->post_process($in_dir, $out_dir);
 }

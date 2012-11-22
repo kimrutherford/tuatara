@@ -40,6 +40,40 @@ use Moose;
 
 with 'TuataraProc::Role::Process';
 
+use File::Copy;
+
+has files_before_process => (is => 'rw', init_arg => undef);
+
+method pre_process($in_dir, $out_dir)
+{
+  # collect file name from the current directory and then after
+  # running abyss copy any new files to out_dir
+  opendir my $d, "." or die "can't open '.': $!";
+
+  my @existing = readdir $d;
+  $self->files_before_process(\@existing);
+
+  closedir $d;
+}
+
+method post_process($in_dir, $out_dir)
+{
+  my @existing = @{$self->files_before_process()};
+  my %existing = map { $_ => 1 } @existing;
+
+  # copy any new files to out_dir
+  opendir my $d, "." or die "can't open '.': $!";
+
+  while (defined (my $ent = readdir $d)) {
+    if (!$existing{$ent}) {
+      move $ent, "$out_dir/$ent" or die "can't move $ent: $!";
+    }
+  }
+
+  closedir $d;
+}
+
+
 method make_args_from_pairs($in_dir, $out_dir)
 {
   my $in_dir_metadata = $self->in_dir_metadata();
