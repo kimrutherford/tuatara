@@ -22,7 +22,7 @@ if (@ARGV < 2) {
   usage();
 }
 
-my $result = GetOptions ("input_directory|i" => \$in_dir,
+my $result = GetOptions ("input_directory|i=s" => \$in_dir,
                          "dry-run|T" => \$dry_run,
                          "help|h" => \$do_help);
 
