@@ -205,7 +205,13 @@ method process($in_dir, $out_dir)
       $vars{args} = $self->make_args_from_pairs($in_dir, $out_dir, $paired_end_files, $single_end_files, $mate_pair_files);
       $proc->();
     }
-    when ('paired') {
+    when ('paired_end') {
+      for my $pair (@$paired_end_files) {
+        $vars{args} = $self->make_args_from_pair($in_dir, $out_dir, $pair);
+        $proc->();
+      }
+    }
+    when ('mate_pair') {
       for my $pair (@$paired_end_files) {
         $vars{args} = $self->make_args_from_pair($in_dir, $out_dir, $pair);
         $proc->();
