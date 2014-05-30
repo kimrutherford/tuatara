@@ -3,7 +3,7 @@ project_name: tuatara
 processes:
   trimmomatic_low_qual_window:
     process_type: trimmomatic
-    command_line_template: "trimmomatic-pe -phred33 [% args %] SLIDINGWINDOW:3:20 MINLEN:40"
+    command_line_template: "trimmomatic-pe -threads 32 -phred33 [% args %] HEADCROP:6 SLIDINGWINDOW:3:30 MINLEN:50"
     exec_type: paired
   fastqc:
     process_type: fast_qc
@@ -11,9 +11,10 @@ processes:
     exec_type: all_files
   quake_k12:
     process_type: quake
-    command_line_template: "quake.py [% args %] -k 12 -p 10"
+    command_line_template: "quake.py [% args %] -k 20 -p 32"
     exec_type: all_pairs
   abyss_k60:
     process_type: abyss
-    command_line_template: "abyss-pe [% args %] k=60 name=[% config.project_name %]"
+    command_line_template: "abyss-pe [% args %] np=32 k=63 name=[% config.project_name %]"
     exec_type: all_pairs
+
