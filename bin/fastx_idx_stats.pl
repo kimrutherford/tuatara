@@ -53,7 +53,7 @@ print $count_fh "$count\n";
 
 close $count_fh;
 
-if ($in_format eq fasta) {
+if ($in_format eq 'fasta') {
   system "fastaindex -f $fasta_file -i $fasta_file.fastaindex";
   system "abyss-fac $fasta_file >> $fasta_file.stats";
 }
