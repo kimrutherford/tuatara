@@ -26,7 +26,7 @@ if ($file =~ /(.+)\.(fastq|fq)$/i) {
   $fasta_file = $file;
 }
 
-my $seqio  = Bio::SeqIO->new(-format => 'fastq' , -file => $file);
+my $seqio  = Bio::SeqIO->new(-format => $in_format , -file => $file);
 
 my $count = 0;
 
