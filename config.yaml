@@ -3,8 +3,12 @@ project_name: tuatara
 processes:
   trimmomatic_low_qual_window:
     process_type: trimmomatic
-    command_line_template: "trimmomatic-pe -threads 32 -phred33 [% args %] HEADCROP:6 SLIDINGWINDOW:3:30 MINLEN:50"
-    exec_type: paired
+    command_line_template: "trimmomatic-pe -threads 32 -phred33 [% args %] SLIDINGWINDOW:3:30 MINLEN:50"
+    exec_type: paired_end
+  trimmomatic_crop_mate_pairs:
+    process_type: trimmomatic
+    command_line_template: "trimmomatic-pe -phred33 [% args %] CROP:40"
+    exec_type: mate_pair
   fastqc:
     process_type: fast_qc
     command_line_template: "fastqc [% args %] --outdir [% out_dir %]"
