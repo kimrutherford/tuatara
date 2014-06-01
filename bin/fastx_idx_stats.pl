@@ -57,4 +57,5 @@ if ($in_format eq 'fasta') {
   system "bp_index.pl -dir . -fmt fasta $fasta_file.bp_index $fasta_file";
   system "fastaindex -f $fasta_file -i $fasta_file.fastaindex";
   system "abyss-fac $fasta_file >> $fasta_file.stats";
+  system "fastaNamesSizes.pl $fasta_file > $fasta_file.names_sizes";
 }
