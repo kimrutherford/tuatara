@@ -2,8 +2,26 @@
 
 use perl5i::2;
 use Moose;
+use Getopt::Long;
+use Digest::MD5;
+
 use Bio::SeqIO;
 use Bio::Seq::Quality;
+
+my $do_sums = 0;
+my $do_help = 0;
+
+my $result = GetOptions ("sums|s" => \$do_sums,
+                         "help|h" => \$do_help);
+
+sub help
+{
+  die "usage:\n  $0 [--sums|-s] file\n";
+}
+
+if (!$result || $do_help) {
+  usage();
+}
 
 my $file = shift;
 
@@ -26,6 +44,10 @@ if ($file =~ /(.+)\.(fastq|fq)$/i) {
   $fasta_file = $file;
 }
 
+my $sums_file_name = "$fasta_file.seq_sums";
+my $sums_fh = undef;
+open $sums_fh, '>', $sums_file_name or die "can't open $sums_file_name\n";
+
 my $seqio  = Bio::SeqIO->new(-format => $in_format , -file => $file);
 
 my $count = 0;
@@ -35,7 +57,18 @@ while(my $rec = $seqio->next_seq()) {
     $out_fasta->write_seq($rec);
   }
 
+  if (defined $sums_fh) {
+    my $ctx = Digest::MD5->new();
+    $ctx->add($rec->seq());
+
+    print $sums_fh $rec->id(), " ", $ctx->hexdigest(), "\n";
+  }
+
   $count++;
+}
+
+if (defined $sums_fh) {
+  close $sums_fh or die "can't close $sums_file_name\n";
 }
 
 my $stats_file_name = "$fasta_file.stats";
@@ -56,6 +89,6 @@ close $count_fh;
 if ($in_format eq 'fasta') {
   system "bp_index.pl -dir . -fmt fasta $fasta_file.bp_index $fasta_file";
   system "fastaindex -f $fasta_file -i $fasta_file.fastaindex";
-  system "abyss-fac $fasta_file >> $fasta_file.stats";
+#  system "abyss-fac $fasta_file >> $fasta_file.stats";
   system "fastaNamesSizes.pl $fasta_file > $fasta_file.names_sizes";
 }
