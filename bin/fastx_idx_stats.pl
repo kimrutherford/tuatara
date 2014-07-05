@@ -38,7 +38,9 @@ if ($file =~ /(.+)\.(fastq|fq)(?:\.gz)?$/i) {
 
   $fasta_file = "$1.fasta";
 
-  if (! -f $fasta_file) {
+  if (-f $fasta_file && (stat $fasta_file)[9] >= (stat $file)[9]) {
+    # skip output fasta
+  } else {
     $out_fasta = Bio::SeqIO->new(-format => 'fasta', -file => ">$fasta_file");
   }
 } else {
@@ -48,19 +50,29 @@ if ($file =~ /(.+)\.(fastq|fq)(?:\.gz)?$/i) {
 
 warn "reading $file, input format $in_format\n";
 
+if ($in_format eq 'fastq' && !defined $out_fasta) {
+  warn "$fasta_file exists - not writing\n";
+}
+
 my $sums_file_name = "$fasta_file.seq_sums";
 my $sums_fh = undef;
-if ($do_sums && ! -f $sums_file_name) {
-  open $sums_fh, '>', $sums_file_name or die "can't open $sums_file_name\n";
+if ($do_sums) {
+  if (-f $sums_file_name) {
+    warn "$sums_file_name exists - not writing\n";
+  } else {
+    open $sums_fh, '>', $sums_file_name or die "can't open $sums_file_name\n";
+  }
 }
 
 my $stats_file_name = "$fasta_file.stats";
 
+my $file_for_seqio = $file;
+
 if ($file =~ /\.gz$/) {
-  $file = "gzip -d < $file |";
+  $file_for_seqio = "gzip -d < $file |";
 }
 
-my $seqio  = Bio::SeqIO->new(-format => $in_format , -file => $file);
+my $seqio  = Bio::SeqIO->new(-format => $in_format , -file => $file_for_seqio);
 
 my $count = 0;
 
@@ -85,14 +97,18 @@ if (defined $sums_fh) {
   close $sums_fh or die "can't close $sums_file_name\n";
 }
 
-if (! -f $stats_file_name) {
+if (-f $stats_file_name && (stat $stats_file_name)[9] >= (stat $file)[9]) {
+  warn "$stats_file_name exists - not writing\n";
+} else {
   open my $stats_fh, '>', $stats_file_name or die "can't open $stats_file_name\n";
   print $stats_fh "stats for $fasta_file\n\nseq_count: $count\n\n";
   close $stats_fh;
 }
 
 my $count_file_name = "$fasta_file.count";
-if (! -f $count_file_name) {
+if (-f $count_file_name && (stat $count_file_name)[9] >= (stat $file)[9]) {
+  warn "$count_file_name exists - not writing\n";
+} else {
   open my $count_fh, '>', $count_file_name or die "can't open $count_file_name\n";
   print $count_fh "$count\n";
   close $count_fh;
@@ -100,7 +116,10 @@ if (! -f $count_file_name) {
 
 if ($in_format eq 'fasta') {
   my $bp_index_filename = "$fasta_file.bp_index";
-  if (! -f "$fasta_file.bp_index") {
+  if (-f $bp_index_filename &&
+      (stat $bp_index_filename)[9] >= (stat $file)[9]) {
+    warn "$fasta_file.bp_index exists - not writing\n";
+  } else {
     my ($dir, $file) = "$fasta_file.bp_index" =~ m|(.*)/(.*)|;
 
     if (!defined $dir) {
@@ -110,11 +129,15 @@ if ($in_format eq 'fasta') {
 
     system "bp_index.pl -dir $dir -fmt fasta $file $fasta_file";
   }
-  if (! -f "$fasta_file.fastaindex") {
+  if (-f "$fasta_file.fastaindex" && (stat "$fasta_file.fastaindex")[9] >= (stat $file)[9]) {
+    warn "$fasta_file.fastaindex exists - not writing\n";
+  } else {
     system "fastaindex -f $fasta_file -i $fasta_file.fastaindex";
   }
 #  system "abyss-fac $fasta_file >> $fasta_file.stats";
-  if (! -f "$fasta_file.names_sizes") {
+  if (-f "$fasta_file.names_sizes" && (stat "$fasta_file.names_sizes")[9] >= (stat $file)[9]) {
+    warn "$fasta_file.names_sizes exists - not writing\n";
+  } else {
     system "fastaNamesSizes.pl $fasta_file > $fasta_file.names_sizes";
   }
 }
