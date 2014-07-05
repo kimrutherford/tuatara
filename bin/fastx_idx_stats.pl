@@ -50,7 +50,7 @@ warn "reading $file, input format $in_format\n";
 
 my $sums_file_name = "$fasta_file.seq_sums";
 my $sums_fh = undef;
-if ($in_format eq 'fasta' && ! -f $sums_file_name) {
+if ($do_sums && ! -f $sums_file_name) {
   open $sums_fh, '>', $sums_file_name or die "can't open $sums_file_name\n";
 }
 
