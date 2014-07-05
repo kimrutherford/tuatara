@@ -74,7 +74,7 @@ if (defined $sums_fh) {
 my $stats_file_name = "$fasta_file.stats";
 open my $stats_fh, '>', $stats_file_name or die "can't open $stats_file_name\n";
 
-print $stats_fh "stats for $fasta_file\n\nread_count: $count\n\n";
+print $stats_fh "stats for $fasta_file\n\nseq_count: $count\n\n";
 
 close $stats_fh;
 
