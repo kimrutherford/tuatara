@@ -103,6 +103,10 @@ if (-f $stats_file_name && (stat $stats_file_name)[9] >= (stat $file)[9]) {
   open my $stats_fh, '>', $stats_file_name or die "can't open $stats_file_name\n";
   print $stats_fh "stats for $fasta_file\n\nseq_count: $count\n\n";
   close $stats_fh;
+
+  if ($in_format eq 'fasta') {
+    system "abyss-fac $fasta_file >> $stats_file_name";
+  }
 }
 
 my $count_file_name = "$fasta_file.count";
@@ -134,7 +138,7 @@ if ($in_format eq 'fasta') {
   } else {
     system "fastaindex -f $fasta_file -i $fasta_file.fastaindex";
   }
-#  system "abyss-fac $fasta_file >> $fasta_file.stats";
+
   if (-f "$fasta_file.names_sizes" && (stat "$fasta_file.names_sizes")[9] >= (stat $file)[9]) {
     warn "$fasta_file.names_sizes exists - not writing\n";
   } else {
