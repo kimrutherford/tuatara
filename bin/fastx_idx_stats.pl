@@ -144,4 +144,10 @@ if ($in_format eq 'fasta') {
   } else {
     system "fastaNamesSizes.pl $fasta_file > $fasta_file.names_sizes";
   }
+
+  if (-f "$fasta_file.assemblathon_stats" && (stat "$fasta_file.assemblathon_stats")[9] >= (stat $file)[9]) {
+    warn "$fasta_file.assemblathon_stats exists - not writing\n";
+  } else {
+    system "assemblathon_stats.pl $fasta_file > $fasta_file.assemblathon_stats";
+  }
 }
