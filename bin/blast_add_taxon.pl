@@ -32,6 +32,15 @@ sub get_lineage
   } else {
     $taxon = $db->get_taxon(-name => $arg);
   }
+
+  if (!defined $taxon) {
+    # for examples like: Epinephelus coioides (Orange-spotted grouper)
+    # just get the first bit
+    if ($arg =~ /([^\(+]+?)\s+\(/) {
+      $taxon = $db->get_taxon(-name => $1);
+    }
+  }
+
   my $tree = Bio::Tree::Tree->new(-node => $taxon);
   my @taxa = $tree->get_nodes;
 
@@ -42,7 +51,6 @@ sub get_lineage
   } @taxa;
 
   $taxon_name_cache{$arg} = join $SEPARATOR, @res;
-
   return @res;
 }
 
@@ -80,6 +88,7 @@ sub get_org_name_for_id
 }
 
 while (defined (my $line = <>)) {
+  chomp $line;
   my ($query, $subject, $pc_id, $align_length, $mismatches,
       $gap_openings, $q_start, $q_end, $s_start, $s_end,
       $e_val, $score) = split /\t/, $line;
