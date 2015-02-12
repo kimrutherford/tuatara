@@ -15,6 +15,8 @@ my $db = Bio::DB::Taxonomy->new(-source => 'entrez');
 tie my %uniprot_id_taxon, 'GDBM_File', '.uniprot_taxon_id_cache', &GDBM_WRCREAT, 0640;
 tie my %taxon_name_cache, 'GDBM_File', '.taxon_cache', &GDBM_WRCREAT, 0640;
 
+my $debug = 0;
+
 sub get_lineage
 {
   my $arg = shift;
@@ -22,23 +24,34 @@ sub get_lineage
   my $SEPARATOR = '<:=:>';
 
   if (exists $taxon_name_cache{$arg}) {
+    warn "from lineage cache: $arg -> $taxon_name_cache{$arg}\n" if $debug;
     return split /$SEPARATOR/, $taxon_name_cache{$arg};
   }
 
   my $taxon;
 
   if ($arg =~ /^\d+/) {
+    warn "get_taxon(-taxonid => $arg)\n" if $debug;
     $taxon = $db->get_taxon(-taxonid => $arg);
   } else {
-    $taxon = $db->get_taxon(-name => $arg);
-  }
-
-  if (!defined $taxon) {
     # for examples like: Epinephelus coioides (Orange-spotted grouper)
     # just get the first bit
     if ($arg =~ /([^\(+]+?)\s+\(/) {
+      warn "get_taxon(-name => $1)\n" if $debug;
       $taxon = $db->get_taxon(-name => $1);
+      warn "  returned: $taxon\n" if $taxon && $debug;
     }
+
+    if (!$taxon) {
+      # try with the full text
+      warn "get_taxon(-name => $arg)\n" if $debug;
+      $taxon = $db->get_taxon(-name => $arg);
+    }
+  }
+
+  if (!defined $taxon) {
+    warn "can't find lineage for $arg\n";
+    return "UNKNOWN";
   }
 
   my $tree = Bio::Tree::Tree->new(-node => $taxon);
@@ -50,6 +63,7 @@ sub get_lineage
     $db->get_taxon(-taxonid => $t->id())->scientific_name();
   } @taxa;
 
+  warn "adding to lineage cache: $arg -> @res\n" if $debug;
   $taxon_name_cache{$arg} = join $SEPARATOR, @res;
   return @res;
 }
@@ -61,6 +75,7 @@ sub get_org_name_for_id
   my $id = shift;
 
   if (exists $uniprot_id_taxon{$id}) {
+    warn "from cache: $id -> $uniprot_id_taxon{$id}\n" if $debug;
     return $uniprot_id_taxon{$id};
   }
 
@@ -79,6 +94,7 @@ sub get_org_name_for_id
     if ($ret_id ne $id) {
       die "server returned a different ID than we requested: $ret_id <> $id\n";
     } else {
+      warn "adding to cache: $id -> $taxon\n" if $debug;
       $uniprot_id_taxon{$id} = $taxon;
       return $taxon;
     }
